@@ -4,15 +4,20 @@ class PlayScene extends Phaser.Scene {
   }
 
   
-
   hitPlayer(player, fruit){
     console.log(fruit.texture.key);
     if(fruit.texture.key == "apple"){
       fruit.destroy();
-      this.collected += 1;
-      this.collText.setText('Collected: ' + this.collected);
+      if(this.collected < 3){
+        this.collected += 1;
+        this.collText.setText('Collected: ' + this.collected);
+      }else{
+        this.cameras.main.shake(100);
+      }
     } else {
-      this.cameras.main.shake(100);
+      //this.lives -= 1;
+      //this.livesText.setText('Lives: ' + this.lives);
+      //this.cameras.main.shake(100);
     }
   }
 
@@ -20,19 +25,27 @@ class PlayScene extends Phaser.Scene {
     //console.log(fruit.body._dy);
     //console.log(fruit.texture.key);
 
-    if(fruit.texture.key == "melon"){
+    if(fruit.texture.key == 'melon'){
       fruit.destroy();
+    } else if (fruit.body._dy < 0.5) {
+      fruit.destroy();
+    }
 
       /*var tempX = fruit.x;
       var tempY = fruit.y;
       this.splash = this.physics.add.sprite(tempX, tempY, 'splash',0);
       this.splash.on('animationcomplete',(function () {	console.log('animation complete');console.log(this);}), this);
       this.splash.anims.play('splash', true);*/
-    }
-
   }
 
 
+  renderAmmonition(ammo){
+    var y = 30;
+    for(var i=0;i < ammo;i++){
+      this.add.image(50, y, 'blueberry').setScale(2);
+      y += 30;
+    }
+  }
 
 
   hitFruit (fruit, bullet) {
@@ -60,8 +73,11 @@ class PlayScene extends Phaser.Scene {
 
     // Set bulletActive property to false
     this.bulletActive = false;
+    this.barrelActive = false;
     this.score = 0;
     this.collected = 0;
+    this.ammonition = 10;
+    //this.lives = 3;
 
 
     // Create group for fruits 
@@ -89,6 +105,8 @@ class PlayScene extends Phaser.Scene {
     this.physics.add.overlap(this.fruits, this.player, this.hitPlayer, null, this);
     // Define collision between fruits and grass
     this.physics.add.collider(this.fruits,this.grass, this.hitGrass, null, this);
+
+
     // Define collision between bullet and fruit
     //this.physics.add.collider(this.fruits,this.bullet, this.hitFruit, null, this);
 
@@ -125,10 +143,10 @@ class PlayScene extends Phaser.Scene {
     // Text
 
     this.scoreText = this.add.text(16, 116, 'Score: ' + this.score, { fontSize: '32px', fill: '#000' }).setDepth(1);
-    this.ammoText = this.add.text(16, 146, 'Ammunition: 0', { fontSize: '32px', fill: '#000' }).setDepth(1);
+    //this.ammoText = this.add.text(16, 146, 'Ammunition: ' + this.ammonition, { fontSize: '32px', fill: '#000' }).setDepth(1);
     this.collText = this.add.text(16, 176, 'Collected: ' + this.collected, { fontSize: '32px', fill: '#000' }).setDepth(1);
-
-
+    //this.livesText = this.add.text(16, 206, 'Lives: ' + this.lives, { fontSize: '32px', fill: '#000' }).setDepth(1);
+    this.renderAmmonition(this.ammonition);
 
     // Key press inputs
 
@@ -142,7 +160,7 @@ class PlayScene extends Phaser.Scene {
     // Fire a bullet
     if (this.cursors.up.isDown) {
       console.log("Up pressed");
-      if(!this.bulletActive) {
+      if(!this.bulletActive && this.ammonition > 0) {
           console.log("Bullet shot");
           this.bullet = this.physics.add.sprite(this.player.x,this.player.y-40,"blueberry");
           //this.physics.add.overlap(this.bullet, this.stars, this.hitStar, null, this);
@@ -151,6 +169,10 @@ class PlayScene extends Phaser.Scene {
           //this.bullet.y = this.spaceshipSprite.y - 50;
           //this.bullet.setActive(true).setVisible(true);
           this.bullet.body.velocity.y = -250;
+          this.ammonition -= 1;
+          this.renderAmmonition(this.ammonition);
+          //this.ammoText.setText('Ammonition: ' + this.ammonition);
+
       }
     }
 
@@ -163,6 +185,24 @@ class PlayScene extends Phaser.Scene {
       }
     }
     
+    // Check if player is on barrel
+    if(this.player.x > 745 && !this.barrelActive){
+      this.cameras.main.shake(100);
+      this.barrelActive = true; 
+      this.score += this.collected * 1;
+      this.collected = 0;
+      this.ammonition = 10;
+      this.collText.setText('Collected: ' + this.collected);
+      //this.ammoText.setText('Ammonition: ' + this.ammonition);
+      this.scoreText.setText('Score: ' + this.score);
+      this.renderAmmonition(this.ammonition);
+
+
+    }else if (this.player.x <= 745){
+      this.barrelActive = false;
+    }
+
+
 
 
     // Update player position
