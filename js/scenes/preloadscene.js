@@ -5,12 +5,19 @@ class PreloadScene extends Phaser.Scene {
 
   preload() {
     this.progressBar = this.add.graphics();
-
     this.load.on('progress', this.onProgress, this);
 
-    this.load.image('player', '../assets/player.png');
-    this.load.image('bullet', '../assets/bullet.png');
-    this.load.image('enemy', '../assets/enemy.png');
+    this.load.image('grass', '../assets/grass.png');
+    this.load.image('treeGreen', '../assets/tree_cartoon_big_green.png');
+    this.load.image('treeBrown', '../assets/tree_cartoon_big_brown.png');
+    this.load.image('apple', '../assets/apple.png');
+    this.load.image('melon', '../assets/melon.png');
+    this.load.image('orange', '../assets/orange.png');
+    this.load.image('barrel', '../assets/barrel.png');
+    this.load.image('blueberry', '../assets/blueberry.png');
+    this.load.spritesheet('dude', '../assets/dude.png', { frameWidth: 32, frameHeight: 48 });
+    this.load.spritesheet('dude', '../assets/explosion_01_strip13.png', { frameWidth: 196, frameHeight: 190 });
+    this.load.spritesheet('splash', '../assets/splash.png', { frameWidth: 62, frameHeight: 33 });
   }
 
   onProgress(value) {
