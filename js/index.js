@@ -6,7 +6,7 @@ const config = {
   physics: {
     default: 'arcade'
   },
-  scene: [PreloadScene, PlayScene]
+  scene: [PreloadScene, StartScene, PlayScene]
 };
 
 window.onload = function() {

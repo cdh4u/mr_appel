@@ -3,70 +3,109 @@ class PlayScene extends Phaser.Scene {
     super('PlayScene');
   }
 
-  
+  // Collision handler methods
+  // =========================
+
   hitPlayer(player, fruit){
     console.log(fruit.texture.key);
-    if(fruit.texture.key == "apple"){
+    if(fruit.texture.key == "apple" && this.collected < 3){
       fruit.destroy();
-      if(this.collected < 3){
-        this.collected += 1;
-        this.collText.setText('Collected: ' + this.collected);
-      }else{
-        this.cameras.main.shake(100);
-      }
-    } else {
-      //this.lives -= 1;
-      //this.livesText.setText('Lives: ' + this.lives);
-      //this.cameras.main.shake(100);
+      this.collected += 1;
+      this.collText.setText('Collected: ' + this.collected);
+    }else{
+      this.gameOver = true;
+      var tempX = player.x;
+      var tempY = player.y;
+      this.player.destroy();
+      this.playerSplash = this.physics.add.sprite(tempX, tempY, 'splash',0);
+      this.playerSplash.anims.play('splash', true);
+      this.gameoverText = this.add.text(220, 250, 'GAME OVER', { fontSize: '80px', fill: '#000' }).setDepth(1);
+      this.cameras.main.fade(3000);
+      //this.fruits.kill();
+      // Destroying a group with destroy() does not seem to work
+      //this.fruits.destroy();
+      /*this.fruits.children.iterate(function (child) {
+        console.log(child);
+        if(child) {
+          //child.destroy();
+        }
+      });*/
+      this.time.delayedCall(5000, function() {
+        this.scene.start('StartScene');  
+      }, [], this);
     }
   }
 
   hitGrass(fruit, grass){   
-    //console.log(fruit.body._dy);
-    //console.log(fruit.texture.key);
-
     if(fruit.texture.key == 'melon'){
+      var tempX = fruit.x;
+      var tempY = fruit.y;
       fruit.destroy();
+      this.splash = this.physics.add.sprite(tempX, tempY, 'splash',0);
+      this.splash.anims.play('splash', true);
+      this.time.delayedCall(500, function() {
+        this.splash.destroy();
+      }, [], this);
     } else if (fruit.body._dy < 0.5) {
       fruit.destroy();
     }
-
-      /*var tempX = fruit.x;
-      var tempY = fruit.y;
-      this.splash = this.physics.add.sprite(tempX, tempY, 'splash',0);
-      this.splash.on('animationcomplete',(function () {	console.log('animation complete');console.log(this);}), this);
-      this.splash.anims.play('splash', true);*/
   }
 
+  hitFruit (bullet, fruit) {
 
-  renderAmmonition(ammo){
-    var y = 30;
-    for(var i=0;i < ammo;i++){
-      this.add.image(50, y, 'blueberry').setScale(2);
-      y += 30;
+    // NOTE: Eventhoug the function is called hitFruit(fruits, bullet) Phaser
+    // seems to change the order when calling the funcction.
+    // https://github.com/photonstorm/phaser/blob/master/src/physics/arcade/World.js
+
+    console.log('Hit a ' + fruit.texture.key);
+    console.log('Hits total: ' + fruit.hits);
+    this.resetBullet();
+    if(fruit.texture.key == 'orange'){
+      this.score += 1;
+      this.updateScore();
+      fruit.destroy();
+    } else if (fruit.texture.key == 'apple'){
+      fruit.destroy();
+    } else {
+      fruit.hits += 1;
+      if(fruit.hits == 3){
+        this.score += 5;
+        this.updateScore();
+        fruit.destroy();
+      }
     }
   }
 
 
-  hitFruit (fruit, bullet) {
-    /*star.disableBody(true, true);
-    bullet.disableBody(true, true);
-    // Make the bullet available again
-    this.bulletActive = false;
-    //  Add and update the score
-    this.score += 1;
+  // Helper methods
+  // ==============
+
+  updateScore(){
     this.scoreText.setText('Score: ' + this.score);
-    this.numOfStars -= 1;
-    console.log("Num of stars: ", this.numOfStars);
-    if(this.numOfStars == 0){
-        this.create();
-        
-        sprite.on('animationcomplete',completeFunction,this);
-        sprite.destroy();
-        
-        */
   }
 
+  renderAmmonition(){
+    if(this.ammonition >= 0){
+      this.bullets.children.getArray()[this.ammonition].setVisible(false);
+    }
+  }
+
+  resetAmmonition(){
+    for(var i=0;i<this.ammonition;i++){
+      this.bullets.children.getArray()[i].setVisible(true);
+    }
+  }
+
+
+  resetBullet(){
+    this.bullet.x = 200;
+    this.bullet.y = -50;
+    this.bulletActive = false;
+  }
+
+
+  // Phaser callback mathods
+  // =======================
 
   create() {
     console.log('PlayScene create');
@@ -74,6 +113,7 @@ class PlayScene extends Phaser.Scene {
     // Set bulletActive property to false
     this.bulletActive = false;
     this.barrelActive = false;
+    this.gameOver = false;
     this.score = 0;
     this.collected = 0;
     this.ammonition = 10;
@@ -97,18 +137,29 @@ class PlayScene extends Phaser.Scene {
       setXY: { x: 0, y: 590, stepX: 30 }
     });
 
+    this.bullets = this.physics.add.group({
+      key: 'blueberry',
+      repeat: 9,
+      setXY: { x: 50, y: 590, stepX: 30 }
+    });
+    
+
+
     // Add player    
     this.player = this.physics.add.sprite(400, 550, 'dude',4);
     this.player.setCollideWorldBounds(true);
+
+    // Add bullet (outside of screen)
+    this.bullet = this.physics.add.sprite(200,-40,"blueberry");
 
     // Define collision between fruits and player
     this.physics.add.overlap(this.fruits, this.player, this.hitPlayer, null, this);
     // Define collision between fruits and grass
     this.physics.add.collider(this.fruits,this.grass, this.hitGrass, null, this);
+    // Define collision between bullet and fruits
+    this.physics.add.collider(this.fruits,this.bullet, this.hitFruit, null, this);
 
-
-    // Define collision between bullet and fruit
-    //this.physics.add.collider(this.fruits,this.bullet, this.hitFruit, null, this);
+    
 
     // Define animations
 
@@ -138,18 +189,16 @@ class PlayScene extends Phaser.Scene {
       frameRate: 10
     });
 
-
-
     // Text
 
     this.scoreText = this.add.text(16, 116, 'Score: ' + this.score, { fontSize: '32px', fill: '#000' }).setDepth(1);
-    //this.ammoText = this.add.text(16, 146, 'Ammunition: ' + this.ammonition, { fontSize: '32px', fill: '#000' }).setDepth(1);
+    this.ammoText = this.add.text(16, 146, 'Ammunition: ' + this.ammonition, { fontSize: '32px', fill: '#000' }).setDepth(1);
     this.collText = this.add.text(16, 176, 'Collected: ' + this.collected, { fontSize: '32px', fill: '#000' }).setDepth(1);
     //this.livesText = this.add.text(16, 206, 'Lives: ' + this.lives, { fontSize: '32px', fill: '#000' }).setDepth(1);
-    this.renderAmmonition(this.ammonition);
+    //this.renderAmmonition(this.ammonition);
 
     // Key press inputs
-
+    // NOTE: Seems like we need to define this again, even if it was defined in the startscene.
     this.cursors = this.input.keyboard.createCursorKeys();
 
     
@@ -162,16 +211,13 @@ class PlayScene extends Phaser.Scene {
       console.log("Up pressed");
       if(!this.bulletActive && this.ammonition > 0) {
           console.log("Bullet shot");
-          this.bullet = this.physics.add.sprite(this.player.x,this.player.y-40,"blueberry");
-          //this.physics.add.overlap(this.bullet, this.stars, this.hitStar, null, this);
+          this.bullet.x = this.player.x;
+          this.bullet.y = this.player.y;
           this.bulletActive = true;
-          //this.bullet.x = this.spaceshipSprite.x;
-          //this.bullet.y = this.spaceshipSprite.y - 50;
-          //this.bullet.setActive(true).setVisible(true);
           this.bullet.body.velocity.y = -250;
           this.ammonition -= 1;
-          this.renderAmmonition(this.ammonition);
-          //this.ammoText.setText('Ammonition: ' + this.ammonition);
+          this.renderAmmonition();
+          this.ammoText.setText('Ammonition: ' + this.ammonition);
 
       }
     }
@@ -179,9 +225,7 @@ class PlayScene extends Phaser.Scene {
     // Check if bullet is to be removed
     if(this.bulletActive) {
       if(this.bullet.y < 250) {
-        this.bullet.destroy();
-        //this.bullet.disableBody(true,true);
-        this.bulletActive = false;
+        this.resetBullet();
       }
     }
     
@@ -193,19 +237,15 @@ class PlayScene extends Phaser.Scene {
       this.collected = 0;
       this.ammonition = 10;
       this.collText.setText('Collected: ' + this.collected);
-      //this.ammoText.setText('Ammonition: ' + this.ammonition);
-      this.scoreText.setText('Score: ' + this.score);
-      this.renderAmmonition(this.ammonition);
-
-
+      this.ammoText.setText('Ammonition: ' + this.ammonition);
+      this.updateScore();
+      this.resetAmmonition();
     }else if (this.player.x <= 745){
       this.barrelActive = false;
     }
 
-
-
-
     // Update player position
+    if (!this.gameOver){
     if (this.cursors.left.isDown) {
         this.player.setVelocityX(-160);
         this.player.anims.play('left', true);
@@ -218,34 +258,16 @@ class PlayScene extends Phaser.Scene {
         this.player.setVelocityX(0);
         this.player.anims.play('turn');
     }
-
-
-
-
+    }
 
     // Check if new fruit is to be generated
-    if (Phaser.Math.Between(1, 100) == 1) {
-
-      
-      // Restart game
-      // restart game
-      // this.time.delayedCall(500, function() {
-      //  this.scene.restart();
-      // }, [], this);
-
-      // Fade camera
-      // fade camera
-      //this.time.delayedCall(250, function() {
-      //  this.cameras.main.fade(2500);
-      //}, [], this);
-
-
+    if (Phaser.Math.Between(1, 100) == 1 && !this.gameOver) {
       // Select fruit 
       this.fruitKeys = ['apple', 'melon', 'orange'];
       this.fruitNum = Phaser.Math.Between(0,2);
 
       var fruit = this.fruits.create(Phaser.Math.Between(100, 700), 50, this.fruitKeys[this.fruitNum]);
-      console.log('!!! ' + fruit.texture.key)
+      fruit.hits = 0;
       fruit.body.setVelocityY(100);
       fruit.body.velocity.x = 0;
       fruit.setScale(2);
@@ -255,30 +277,6 @@ class PlayScene extends Phaser.Scene {
         fruit.setBounceY(0.9);
       }
       fruit.setGravityY(100);
-
-
-      /*this.fruit = this.physics.add.sprite(Phaser.Math.Between(100, 700),50,this.fruitKeys[this.fruitNum]).setScale(2);
-      this.fruit.body.setVelocityY(100);
-      this.fruit.body.velocity.x = 0;
-      this.fruit.setCollideWorldBounds(true);
-      this.fruit.setBounceY(0.9);
-      this.fruit.setGravityY(100);
-      this.fruits.add(this.fruit);*/
     }
-
-
-    /*if(this.cursors.left.isDown) {
-      this.player.body.setVelocityX(-5*60);
-    }
-    else if(this.cursors.right.isDown) {
-      this.player.body.setVelocityX(5*60);
-    }
-
-    if(Phaser.Input.Keyboard.JustDown(this.spacebar)) {
-      let bullet = this.bullets.get();
-      if(bullet) {
-        bullet.fire(this.player);
-      }
-    }*/
   }
 }
