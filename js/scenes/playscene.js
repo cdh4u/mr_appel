@@ -21,15 +21,6 @@ class PlayScene extends Phaser.Scene {
       this.blood.anims.play('blood', true);
       this.gameoverText = this.add.text(220, 250, 'GAME OVER', { fontSize: '80px', fill: '#000' }).setDepth(1);
       this.cameras.main.fade(3000);
-      //this.fruits.kill();
-      // Destroying a group with destroy() does not seem to work
-      //this.fruits.destroy();
-      /*this.fruits.children.iterate(function (child) {
-        console.log(child);
-        if(child) {
-          //child.destroy();
-        }
-      });*/
       this.time.delayedCall(5000, function() {
         this.scene.start('StartScene');  
       }, [], this);
@@ -145,6 +136,7 @@ class PlayScene extends Phaser.Scene {
     this.bulletActive = false;
     this.barrelActive = false;
     this.gameOver = false;
+    this.fruitsRemoved = false;
     this.score = 0;
     this.collected = 0;
     this.ammonition = 10;
@@ -235,7 +227,7 @@ class PlayScene extends Phaser.Scene {
     this.anims.create({
       key: 'blood',
       frames: this.anims.generateFrameNumbers('blood', { start: 0, end: 15 }),
-      frameRate: 5
+      frameRate: 3
     });
 
 
@@ -250,6 +242,18 @@ class PlayScene extends Phaser.Scene {
   }
 
   update() {
+
+    // Check if all fruits are to be removed
+    if (this.gameOver && !this.fruitsRemoved){
+      console.log('Removing the fruits');
+      this.fruitsRemoved = true;
+      //this.fruits.destroy();
+      //this.fruits.kill();
+      var tempArray = this.fruits.children.getArray(); 
+      for(var i=0;i<tempArray.length;i++){
+        tempArray[i].destroy();
+      }
+    }
 
     // Fire a bullet
     if (this.cursors.up.isDown && !this.gameOver) {
@@ -267,13 +271,13 @@ class PlayScene extends Phaser.Scene {
 
     // Check if bullet is to be removed
     if(this.bulletActive) {
-      if(this.bullet.y < 250) {
+      if(this.bullet.y < 250 || this.gameOver) {
         this.resetBullet();
       }
     }
     
     // Check if player is on barrel
-    if(this.player.x > 745 && !this.barrelActive){
+    if(this.player.x > 745 && !this.barrelActive && !this.gameOver){
       this.cameras.main.shake(100);
       this.barrelActive = true; 
       this.score += this.collected * 1;
@@ -288,18 +292,16 @@ class PlayScene extends Phaser.Scene {
 
     // Update player position
     if (!this.gameOver){
-    if (this.cursors.left.isDown) {
+      if (this.cursors.left.isDown) {
         this.player.setVelocityX(-160);
         this.player.anims.play('left', true);
-    }
-    else if (this.cursors.right.isDown) {
+      } else if (this.cursors.right.isDown) {
         this.player.setVelocityX(160);
         this.player.anims.play('right', true);
-    }
-    else {
+      } else {
         this.player.setVelocityX(0);
         this.player.anims.play('turn');
-    }
+      }
     }
 
     // Check if new fruit is to be generated
