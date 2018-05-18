@@ -17,8 +17,10 @@ class PreloadScene extends Phaser.Scene {
     this.load.image('barrel', './assets/barrel.png');
     this.load.image('blueberry', './assets/blueberry.png');
     this.load.spritesheet('dude', './assets/dude.png', { frameWidth: 32, frameHeight: 48 });
-    this.load.spritesheet('dude', './assets/explosion_01_strip13.png', { frameWidth: 196, frameHeight: 190 });
+    this.load.spritesheet('explosion', './assets/explosion_01_strip13.png', { frameWidth: 196, frameHeight: 190 });
     this.load.spritesheet('splash', './assets/splash.png', { frameWidth: 62, frameHeight: 33 });
+    this.load.spritesheet('blood', './assets/blood_hit_05.png', { frameWidth: 128, frameHeight: 128 });
+
   }
 
   onProgress(value) {

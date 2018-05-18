@@ -11,14 +11,14 @@ class PlayScene extends Phaser.Scene {
     if(fruit.texture.key == "apple" && this.collected < 3){
       fruit.destroy();
       this.collected += 1;
-      this.collText.setText('Collected: ' + this.collected);
+      this.updateCollected();
     }else{
       this.gameOver = true;
       var tempX = player.x;
       var tempY = player.y;
       this.player.destroy();
-      this.playerSplash = this.physics.add.sprite(tempX, tempY, 'splash',0);
-      this.playerSplash.anims.play('splash', true);
+      this.blood = this.add.sprite(tempX, tempY+12, 'blood',0);
+      this.blood.anims.play('blood', true);
       this.gameoverText = this.add.text(220, 250, 'GAME OVER', { fontSize: '80px', fill: '#000' }).setDepth(1);
       this.cameras.main.fade(3000);
       //this.fruits.kill();
@@ -41,9 +41,12 @@ class PlayScene extends Phaser.Scene {
       var tempX = fruit.x;
       var tempY = fruit.y;
       fruit.destroy();
-      this.splash = this.physics.add.sprite(tempX, tempY, 'splash',0);
+      // For some reason, using physics for the splsh sprite causes the sprite to not be 
+      // removed from time to tim.
+      //this.splash = this.physics.add.sprite(tempX, tempY+12, 'splash',0);
+      this.splash = this.add.sprite(tempX, tempY, 'splash',0);
       this.splash.anims.play('splash', true);
-      this.time.delayedCall(500, function() {
+      this.time.delayedCall(1000, function() {
         this.splash.destroy();
       }, [], this);
     } else if (fruit.body._dy < 0.5) {
@@ -59,19 +62,36 @@ class PlayScene extends Phaser.Scene {
 
     console.log('Hit a ' + fruit.texture.key);
     console.log('Hits total: ' + fruit.hits);
+    var tempX = fruit.x;
+    var tempY = fruit.y;
     this.resetBullet();
     if(fruit.texture.key == 'orange'){
       this.score += 1;
       this.updateScore();
       fruit.destroy();
+      this.explosion = this.add.sprite(tempX, tempY, 'explosion',0);
+      this.explosion.anims.play('explosion', true);
+      this.time.delayedCall(1000, function() {
+        this.explosion.destroy();
+      }, [], this);
     } else if (fruit.texture.key == 'apple'){
       fruit.destroy();
+      this.explosion = this.add.sprite(tempX, tempY, 'explosion',0);
+      this.explosion.anims.play('explosion', true);
+      this.time.delayedCall(1000, function() {
+        this.explosion.destroy();
+      }, [], this);
     } else {
       fruit.hits += 1;
       if(fruit.hits == 3){
         this.score += 5;
         this.updateScore();
         fruit.destroy();
+        this.explosion = this.add.sprite(tempX, tempY, 'explosion',0);
+        this.explosion.anims.play('explosion', true);
+        this.time.delayedCall(1000, function() {
+          this.explosion.destroy();
+        }, [], this);  
       }
     }
   }
@@ -84,7 +104,7 @@ class PlayScene extends Phaser.Scene {
     this.scoreText.setText('Score: ' + this.score);
   }
 
-  renderAmmonition(){
+  updateAmmonition(){
     if(this.ammonition >= 0){
       this.bullets.children.getArray()[this.ammonition].setVisible(false);
     }
@@ -96,6 +116,17 @@ class PlayScene extends Phaser.Scene {
     }
   }
 
+  updateCollected(){
+    if(this.collected < 4){
+      this.apples.children.getArray()[this.collected-1].setVisible(true);
+    }
+  }
+
+  resetCollected(){
+    for(var i=0;i<3;i++){
+      this.apples.children.getArray()[i].setVisible(false);
+    }
+  }
 
   resetBullet(){
     this.bullet.x = 200;
@@ -143,6 +174,12 @@ class PlayScene extends Phaser.Scene {
       setXY: { x: 50, y: 590, stepX: 30 }
     });
     
+    this.apples = this.physics.add.group({
+      key: 'apple',
+      repeat: 2,
+      setXY: { x: 600, y: 590, stepX: 30 },
+    });
+    this.resetCollected();
 
 
     // Add player    
@@ -185,29 +222,37 @@ class PlayScene extends Phaser.Scene {
 
     this.anims.create({
       key: 'splash',
-      frames: this.anims.generateFrameNumbers('splash', { start: 0, end: 4 }),
+      frames: this.anims.generateFrameNumbers('splash', { start: 0, end: 7 }),
       frameRate: 10
     });
 
-    // Text
+    this.anims.create({
+      key: 'explosion',
+      frames: this.anims.generateFrameNumbers('explosion', { start: 0, end: 12 }),
+      frameRate: 10
+    });
 
+    this.anims.create({
+      key: 'blood',
+      frames: this.anims.generateFrameNumbers('blood', { start: 0, end: 15 }),
+      frameRate: 5
+    });
+
+
+
+    // Text
     this.scoreText = this.add.text(16, 116, 'Score: ' + this.score, { fontSize: '32px', fill: '#000' }).setDepth(1);
-    this.ammoText = this.add.text(16, 146, 'Ammunition: ' + this.ammonition, { fontSize: '32px', fill: '#000' }).setDepth(1);
-    this.collText = this.add.text(16, 176, 'Collected: ' + this.collected, { fontSize: '32px', fill: '#000' }).setDepth(1);
-    //this.livesText = this.add.text(16, 206, 'Lives: ' + this.lives, { fontSize: '32px', fill: '#000' }).setDepth(1);
-    //this.renderAmmonition(this.ammonition);
 
     // Key press inputs
     // NOTE: Seems like we need to define this again, even if it was defined in the startscene.
     this.cursors = this.input.keyboard.createCursorKeys();
 
-    
   }
 
   update() {
 
     // Fire a bullet
-    if (this.cursors.up.isDown) {
+    if (this.cursors.up.isDown && !this.gameOver) {
       console.log("Up pressed");
       if(!this.bulletActive && this.ammonition > 0) {
           console.log("Bullet shot");
@@ -216,9 +261,7 @@ class PlayScene extends Phaser.Scene {
           this.bulletActive = true;
           this.bullet.body.velocity.y = -250;
           this.ammonition -= 1;
-          this.renderAmmonition();
-          this.ammoText.setText('Ammonition: ' + this.ammonition);
-
+          this.updateAmmonition();
       }
     }
 
@@ -234,11 +277,10 @@ class PlayScene extends Phaser.Scene {
       this.cameras.main.shake(100);
       this.barrelActive = true; 
       this.score += this.collected * 1;
-      this.collected = 0;
-      this.ammonition = 10;
-      this.collText.setText('Collected: ' + this.collected);
-      this.ammoText.setText('Ammonition: ' + this.ammonition);
       this.updateScore();
+      this.collected = 0;
+      this.resetCollected();
+      this.ammonition = 10;
       this.resetAmmonition();
     }else if (this.player.x <= 745){
       this.barrelActive = false;
