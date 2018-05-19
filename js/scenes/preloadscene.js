@@ -21,6 +21,8 @@ class PreloadScene extends Phaser.Scene {
     this.load.spritesheet('splash', './assets/splash.png', { frameWidth: 62, frameHeight: 33 });
     this.load.spritesheet('blood', './assets/blood_hit_05.png', { frameWidth: 128, frameHeight: 128 });
 
+
+    this.load.audio('theme', './assets/LaNative8-bit.wav');
   }
 
   onProgress(value) {

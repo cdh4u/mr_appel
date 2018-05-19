@@ -21,6 +21,7 @@ class PlayScene extends Phaser.Scene {
       //this.gameoverText = this.add.text(220, 250, 'GAME OVER', { fontSize: '80px', fill: '#000' }).setDepth(1);
       this.cameras.main.fade(3000);
       this.time.delayedCall(3000, function() {
+        this.music.stop();
         this.scene.start('GameoverScene');  
       }, [], this);
     }
@@ -44,11 +45,9 @@ class PlayScene extends Phaser.Scene {
       fruit.destroy();
       explosion.anims.play('explosion', true);
       blood.anims.play('blood', true);      
-      //this.groundExplosion = this.add.sprite(tempX, tempY+12, 'explosion',0);
-      //this.groundExplosion.anims.play('explosion', true);
-      //this.gameoverText = this.add.text(220, 250, 'GAME OVER', { fontSize: '80px', fill: '#000' }).setDepth(1);
       this.cameras.main.fade(3000);
       this.time.delayedCall(3000, function() {
+        this.music.stop();
         this.scene.start('GameoverScene');  
       }, [], this);
     }
@@ -263,6 +262,10 @@ class PlayScene extends Phaser.Scene {
       frames: this.anims.generateFrameNumbers('blood', { start: 0, end: 15 }),
       frameRate: 3
     });
+
+    this.music = this.sound.add('theme');
+    this.music.play();
+
 
 
     // KEY INPUT
