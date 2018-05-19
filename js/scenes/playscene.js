@@ -3,45 +3,54 @@ class PlayScene extends Phaser.Scene {
     super('PlayScene');
   }
 
-  // Collision handler methods
-  // =========================
+  // COLLISION HANDLERS
+  // ==================
 
   hitPlayer(player, fruit){
     console.log(fruit.texture.key);
     if(fruit.texture.key == "apple" && this.collected < 3){
+      this.particlesApple.emitParticleAt(this.player.x, this.player.y);
       fruit.destroy();
       this.collected += 1;
       this.updateCollected();
     }else{
       this.gameOver = true;
-      var tempX = player.x;
-      var tempY = player.y;
+      var blood = this.add.sprite(player.x, player.y+12, 'blood',0);
       this.player.destroy();
-      this.blood = this.add.sprite(tempX, tempY+12, 'blood',0);
-      this.blood.anims.play('blood', true);
-      this.gameoverText = this.add.text(220, 250, 'GAME OVER', { fontSize: '80px', fill: '#000' }).setDepth(1);
+      blood.anims.play('blood', true);
+      //this.gameoverText = this.add.text(220, 250, 'GAME OVER', { fontSize: '80px', fill: '#000' }).setDepth(1);
       this.cameras.main.fade(3000);
-      this.time.delayedCall(5000, function() {
-        this.scene.start('StartScene');  
+      this.time.delayedCall(3000, function() {
+        this.scene.start('GameoverScene');  
       }, [], this);
     }
   }
 
   hitGrass(fruit, grass){   
+    var tempX = fruit.x;
+    var tempY = fruit.y;
     if(fruit.texture.key == 'melon'){
-      var tempX = fruit.x;
-      var tempY = fruit.y;
       fruit.destroy();
-      // For some reason, using physics for the splsh sprite causes the sprite to not be 
-      // removed from time to tim.
-      //this.splash = this.physics.add.sprite(tempX, tempY+12, 'splash',0);
       this.splash = this.add.sprite(tempX, tempY, 'splash',0);
       this.splash.anims.play('splash', true);
       this.time.delayedCall(1000, function() {
         this.splash.destroy();
       }, [], this);
     } else if (fruit.body._dy < 0.5) {
+      this.gameOver = true;
+      var explosion = this.add.sprite(tempX, tempY+12, 'explosion',0);
+      var blood = this.add.sprite(this.player.x, this.player.y+12, 'blood',0);
+      this.player.destroy();
       fruit.destroy();
+      explosion.anims.play('explosion', true);
+      blood.anims.play('blood', true);      
+      //this.groundExplosion = this.add.sprite(tempX, tempY+12, 'explosion',0);
+      //this.groundExplosion.anims.play('explosion', true);
+      //this.gameoverText = this.add.text(220, 250, 'GAME OVER', { fontSize: '80px', fill: '#000' }).setDepth(1);
+      this.cameras.main.fade(3000);
+      this.time.delayedCall(3000, function() {
+        this.scene.start('GameoverScene');  
+      }, [], this);
     }
   }
 
@@ -88,11 +97,11 @@ class PlayScene extends Phaser.Scene {
   }
 
 
-  // Helper methods
-  // ==============
+  // HELPERS
+  // =======
 
   updateScore(){
-    this.scoreText.setText('Score: ' + this.score);
+    this.scoreText.setText(this.score);
   }
 
   updateAmmonition(){
@@ -125,14 +134,13 @@ class PlayScene extends Phaser.Scene {
     this.bulletActive = false;
   }
 
-
-  // Phaser callback mathods
-  // =======================
+  // PHASER SCENE STATES
+  // ===================
 
   create() {
     console.log('PlayScene create');
 
-    // Set bulletActive property to false
+    // RESET PROPERTY VALUES
     this.bulletActive = false;
     this.barrelActive = false;
     this.gameOver = false;
@@ -140,58 +148,84 @@ class PlayScene extends Phaser.Scene {
     this.score = 0;
     this.collected = 0;
     this.ammonition = 10;
-    //this.lives = 3;
 
-
-    // Create group for fruits 
-    this.fruits = this.physics.add.group();
-
-    //this.add.image(400, 100, 'tree').setScale(2.5,3.5);
+    // ADD GRAPHICS
+    // Tree
     this.add.image(400, -80, 'treeGreen').setScale(2.5,2.5).setDepth(0.9);
     this.add.image(420, 400, 'treeBrown').setScale(2.5,3.5);
 
-    // Add barrel
-    this.add.image(750, 525, 'barrel');
+    // Barrel
+    this.barrel = this.add.image(750, 525, 'barrel');
 
-    // Render the grass by creating a static group and repeating the grass tile
+    // Grass
     this.grass = this.physics.add.staticGroup({
       key: 'grass',
       repeat: 27,
       setXY: { x: 0, y: 590, stepX: 30 }
     });
 
+    // Player    
+    this.player = this.physics.add.sprite(400, 550, 'dude',4);
+    this.player.setCollideWorldBounds(true);
+    
+    // Bullet (initially outside of screen)
+    this.bullet = this.physics.add.sprite(200,-40,"blueberry");
+    
+    // Score text
+    this.scoreText = this.add.text(730, 530, this.score, { fontSize: '40px', fill: '#FFF' }).setDepth(1);
+
+
+    // CREATE GROUPS
+    // Fruits
+    this.fruits = this.physics.add.group();
+
+    // Bullets left
     this.bullets = this.physics.add.group({
       key: 'blueberry',
       repeat: 9,
       setXY: { x: 50, y: 590, stepX: 30 }
     });
     
+    // Apples collected
     this.apples = this.physics.add.group({
       key: 'apple',
       repeat: 2,
-      setXY: { x: 600, y: 590, stepX: 30 },
+      setXY: { x: 700, y: 590, stepX: 30 },
     });
     this.resetCollected();
 
 
-    // Add player    
-    this.player = this.physics.add.sprite(400, 550, 'dude',4);
-    this.player.setCollideWorldBounds(true);
+    // CREATE PARTICLE EMITTERS
+    // Blueberry
+    this.particlesBlueberry = this.add.particles('blueberry');
+    this.particlesBlueberry.createEmitter({
+      angle: { min: 0, max: 360, steps: 32 },
+      lifespan: 1000,
+      speed: 400,
+      quantity: 32,
+      scale: { start: 1, end: 0 },
+      on: false
+    });
+    
+    // Apple
+    this.particlesApple = this.add.particles('apple');
+    this.particlesApple.createEmitter({
+      angle: { min: 0, max: 360, steps: 32 },
+      lifespan: 1000,
+      speed: 400,
+      quantity: 32,
+      scale: { start: 1, end: 0 },
+      on: false
+    });
 
-    // Add bullet (outside of screen)
-    this.bullet = this.physics.add.sprite(200,-40,"blueberry");
 
-    // Define collision between fruits and player
+    // DEFINE COLLISIONS
     this.physics.add.overlap(this.fruits, this.player, this.hitPlayer, null, this);
-    // Define collision between fruits and grass
     this.physics.add.collider(this.fruits,this.grass, this.hitGrass, null, this);
-    // Define collision between bullet and fruits
     this.physics.add.collider(this.fruits,this.bullet, this.hitFruit, null, this);
-
     
 
-    // Define animations
-
+    // DEFINE ANIMATIONS
     this.anims.create({
       key: 'left',
       frames: this.anims.generateFrameNumbers('dude', { start: 0, end: 3 }),
@@ -231,19 +265,13 @@ class PlayScene extends Phaser.Scene {
     });
 
 
-
-    // Text
-    this.scoreText = this.add.text(16, 116, 'Score: ' + this.score, { fontSize: '32px', fill: '#000' }).setDepth(1);
-
-    // Key press inputs
-    // NOTE: Seems like we need to define this again, even if it was defined in the startscene.
+    // KEY INPUT
     this.cursors = this.input.keyboard.createCursorKeys();
-
   }
 
   update() {
 
-    // Check if all fruits are to be removed
+    // Remove fruits?
     if (this.gameOver && !this.fruitsRemoved){
       console.log('Removing the fruits');
       this.fruitsRemoved = true;
@@ -255,7 +283,7 @@ class PlayScene extends Phaser.Scene {
       }
     }
 
-    // Fire a bullet
+    // Fire a bullet?
     if (this.cursors.up.isDown && !this.gameOver) {
       console.log("Up pressed");
       if(!this.bulletActive && this.ammonition > 0) {
@@ -269,18 +297,18 @@ class PlayScene extends Phaser.Scene {
       }
     }
 
-    // Check if bullet is to be removed
+    // Remove bullet?
     if(this.bulletActive) {
       if(this.bullet.y < 250 || this.gameOver) {
         this.resetBullet();
       }
     }
     
-    // Check if player is on barrel
+    // Player on barrel?
     if(this.player.x > 745 && !this.barrelActive && !this.gameOver){
-      this.cameras.main.shake(100);
+      this.particlesBlueberry.emitParticleAt(this.barrel.x, this.barrel.y);
       this.barrelActive = true; 
-      this.score += this.collected * 1;
+      this.score += this.collected * this.collected;
       this.updateScore();
       this.collected = 0;
       this.resetCollected();
@@ -288,6 +316,23 @@ class PlayScene extends Phaser.Scene {
       this.resetAmmonition();
     }else if (this.player.x <= 745){
       this.barrelActive = false;
+    }
+
+    // New fruit?
+    if (Phaser.Math.Between(1, 100) == 1 && !this.gameOver) {
+      // Select fruit 
+      this.fruitKeys = ['apple', 'melon', 'orange'];
+      this.fruitNum = Phaser.Math.Between(0,2);
+      var fruit = this.fruits.create(Phaser.Math.Between(100, 700), 50, this.fruitKeys[this.fruitNum]);
+      fruit.hits = 0;
+      fruit.body.setVelocityY(100);
+      fruit.body.velocity.x = 0;
+      fruit.setScale(2);
+      fruit.setCollideWorldBounds(true);
+      if(this.fruitNum != 1){
+        fruit.setBounceY(0.9);
+      }
+      fruit.setGravityY(100);
     }
 
     // Update player position
@@ -302,25 +347,6 @@ class PlayScene extends Phaser.Scene {
         this.player.setVelocityX(0);
         this.player.anims.play('turn');
       }
-    }
-
-    // Check if new fruit is to be generated
-    if (Phaser.Math.Between(1, 100) == 1 && !this.gameOver) {
-      // Select fruit 
-      this.fruitKeys = ['apple', 'melon', 'orange'];
-      this.fruitNum = Phaser.Math.Between(0,2);
-
-      var fruit = this.fruits.create(Phaser.Math.Between(100, 700), 50, this.fruitKeys[this.fruitNum]);
-      fruit.hits = 0;
-      fruit.body.setVelocityY(100);
-      fruit.body.velocity.x = 0;
-      fruit.setScale(2);
-      fruit.setCollideWorldBounds(true);
-      // All fruits except melons will bounce
-      if(this.fruitNum != 1){
-        fruit.setBounceY(0.9);
-      }
-      fruit.setGravityY(100);
     }
   }
 }
