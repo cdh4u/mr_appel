@@ -27,7 +27,7 @@ class PreloadScene extends Phaser.Scene {
     this.load.audio('explosionSound', './assets/expl05.wav');
     this.load.audio('barrelSound', './assets/ClassicGameWin.wav');
     this.load.audio('appleSound', './assets/star.wav');
-
+    this.load.audio('gameoverSound', './assets/GameOverFemaleStarfleetVoice.wav');
   }
 
   onProgress(value) {

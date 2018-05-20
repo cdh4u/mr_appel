@@ -9,6 +9,10 @@ class GameoverScene extends Phaser.Scene {
         this.gameoverText = this.add.text(80, 350, 'No Animals Were Harmed In The Making Of This Game', { fontSize: '22px', fill: '#000' }).setDepth(1);
         this.gameoverText = this.add.text(200, 570, 'Press DOWN To Continue', { fontSize: '32px', fill: '#000' }).setDepth(1);
 
+        var sound = this.sound.add('gameoverSound');
+        sound.setLoop(false);
+        sound.play();
+    
         // Key press inputs
          this.cursors = this.input.keyboard.createCursorKeys();
     }
