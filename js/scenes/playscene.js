@@ -17,8 +17,8 @@ class PlayScene extends Phaser.Scene {
       this.gameOver = true;
       var blood = this.add.sprite(player.x, player.y+12, 'blood',0);
       this.player.destroy();
+      this.playSound('explosionSound');
       blood.anims.play('blood', true);
-      //this.gameoverText = this.add.text(220, 250, 'GAME OVER', { fontSize: '80px', fill: '#000' }).setDepth(1);
       this.cameras.main.fade(3000);
       this.time.delayedCall(3000, function() {
         this.music.stop();
@@ -43,6 +43,7 @@ class PlayScene extends Phaser.Scene {
       var blood = this.add.sprite(this.player.x, this.player.y+12, 'blood',0);
       this.player.destroy();
       fruit.destroy();
+      this.playSound('explosionSound');
       explosion.anims.play('explosion', true);
       blood.anims.play('blood', true);      
       this.cameras.main.fade(3000);
@@ -68,6 +69,7 @@ class PlayScene extends Phaser.Scene {
       this.score += 1;
       this.updateScore();
       fruit.destroy();
+      this.playSound('explosionSound');
       this.explosion = this.add.sprite(tempX, tempY, 'explosion',0);
       this.explosion.anims.play('explosion', true);
       this.time.delayedCall(1000, function() {
@@ -75,6 +77,7 @@ class PlayScene extends Phaser.Scene {
       }, [], this);
     } else if (fruit.texture.key == 'apple'){
       fruit.destroy();
+      this.playSound('explosionSound');
       this.explosion = this.add.sprite(tempX, tempY, 'explosion',0);
       this.explosion.anims.play('explosion', true);
       this.time.delayedCall(1000, function() {
@@ -86,6 +89,7 @@ class PlayScene extends Phaser.Scene {
         this.score += 5;
         this.updateScore();
         fruit.destroy();
+        this.playSound('explosionSound');
         this.explosion = this.add.sprite(tempX, tempY, 'explosion',0);
         this.explosion.anims.play('explosion', true);
         this.time.delayedCall(1000, function() {
@@ -132,6 +136,13 @@ class PlayScene extends Phaser.Scene {
     this.bullet.y = -50;
     this.bulletActive = false;
   }
+
+  playSound(sound){
+    var sound = this.sound.add(sound);
+    sound.setLoop(false);
+    sound.play();
+  }
+
 
   // PHASER SCENE STATES
   // ===================
@@ -296,6 +307,7 @@ class PlayScene extends Phaser.Scene {
           this.bulletActive = true;
           this.bullet.body.velocity.y = -250;
           this.ammonition -= 1;
+          this.playSound('fireSound');
           this.updateAmmonition();
       }
     }
