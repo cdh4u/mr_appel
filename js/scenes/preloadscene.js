@@ -25,6 +25,9 @@ class PreloadScene extends Phaser.Scene {
     this.load.audio('theme', './assets/LaNative8-bit.wav');
     this.load.audio('fireSound', './assets/laser_blast.wav');
     this.load.audio('explosionSound', './assets/expl05.wav');
+    this.load.audio('barrelSound', './assets/ClassicGameWin.wav');
+    this.load.audio('appleSound', './assets/star.wav');
+
   }
 
   onProgress(value) {

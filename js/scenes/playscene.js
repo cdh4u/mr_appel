@@ -11,6 +11,7 @@ class PlayScene extends Phaser.Scene {
     if(fruit.texture.key == "apple" && this.collected < 3){
       this.particlesApple.emitParticleAt(this.player.x, this.player.y);
       fruit.destroy();
+      this.playSound('appleSound');
       this.collected += 1;
       this.updateCollected();
     }else{
@@ -323,6 +324,7 @@ class PlayScene extends Phaser.Scene {
     if(this.player.x > 745 && !this.barrelActive && !this.gameOver){
       this.particlesBlueberry.emitParticleAt(this.barrel.x, this.barrel.y);
       this.barrelActive = true; 
+      this.playSound('barrelSound');
       this.score += this.collected * this.collected;
       this.updateScore();
       this.collected = 0;
