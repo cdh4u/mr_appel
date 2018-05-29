@@ -282,6 +282,7 @@ class PlayScene extends Phaser.Scene {
 
     // KEY INPUT
     this.cursors = this.input.keyboard.createCursorKeys();
+    this.touch = this.input.activePointer;
   }
 
   update() {
@@ -299,7 +300,7 @@ class PlayScene extends Phaser.Scene {
     }
 
     // Fire a bullet?
-    if (this.cursors.up.isDown && !this.gameOver) {
+    if ((this.cursors.up.isDown || this.touch.isDown) && !this.gameOver) {
       console.log("Up pressed");
       if(!this.bulletActive && this.ammonition > 0) {
           console.log("Bullet shot");
@@ -313,6 +314,10 @@ class PlayScene extends Phaser.Scene {
       }
     }
 
+
+
+
+    
     // Remove bullet?
     if(this.bulletActive) {
       if(this.bullet.y < 250 || this.gameOver) {

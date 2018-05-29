@@ -28,10 +28,25 @@ class StartScene extends Phaser.Scene {
 
         // Key press inputs
         this.cursors = this.input.keyboard.createCursorKeys();
+        this.touch = this.input.activePointer;
+        //console.log(this.cursors);
+        console.log(this.touch);
+
+
         
+
     }
 
     update(){
+ 
+        if (this.touch.isDown){
+            console.log(this.touch);
+            this.cameras.main.fade(250);
+            this.time.delayedCall(300, function() {
+                this.scene.start('PlayScene');  
+              }, [], this);
+        }
+
         if (this.cursors.down.isDown) {
             this.cameras.main.fade(250);
             this.time.delayedCall(300, function() {
@@ -43,6 +58,6 @@ class StartScene extends Phaser.Scene {
             this.time.delayedCall(300, function() {
                 this.scene.start('InfoScene');  
               }, [], this);
-        }
+        }    
     }
   }
